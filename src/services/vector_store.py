@@ -5,7 +5,7 @@ from pathlib import Path
 
 import chromadb
 from chromadb.config import Settings as ChromaSettings
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 from src.core.config import settings
 from src.core.logging import logger

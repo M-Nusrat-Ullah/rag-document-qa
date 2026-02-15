@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Any
 from abc import ABC, abstractmethod
 
 from langchain_openai import ChatOpenAI
-from langchain.schema import HumanMessage, SystemMessage, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 
 from src.core.config import settings
 from src.core.logging import logger

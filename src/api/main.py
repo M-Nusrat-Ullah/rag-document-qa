@@ -13,7 +13,7 @@ def create_app() -> FastAPI:
     
     app = FastAPI(
         title=settings.app_name,
-        description="🤖 Production-ready RAG application for document Q&A",
+        description="Production-ready RAG application for document Q&A",
         version=settings.app_version,
         docs_url="/docs",
         redoc_url="/redoc"

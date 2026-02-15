@@ -4,13 +4,12 @@ from pathlib import Path
 from typing import List, Optional
 import hashlib
 
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import (
     PyPDFLoader,
     TextLoader,
-    Docx2txtLoader,
 )
-from langchain.schema import Document
+from langchain_core.documents import Document
 
 from src.core.config import settings
 from src.core.logging import logger
