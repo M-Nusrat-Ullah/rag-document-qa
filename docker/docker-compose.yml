@@ -1,0 +1,102 @@
+version: "3.8"
+
+services:
+  # =========================
+  # RAG API Service
+  # =========================
+  rag-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: rag-api
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LLM_PROVIDER=ollama
+      - OLLAMA_MODEL=qwen2.5:3b
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - USE_LOCAL_EMBEDDINGS=true
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - COLLECTION_NAME=documents
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+    volumes:
+      - chroma_data:/app/data/chroma_db
+      - model_cache:/root/.cache
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 90s
+      retries: 3
+
+  # =========================
+  # Ollama LLM Service
+  # =========================
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - rag-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 15s
+      timeout: 10s
+      start_period: 30s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+
+  # =========================
+  # Model Puller (one-time setup)
+  # =========================
+  ollama-pull:
+    image: curlimages/curl:latest
+    container_name: ollama-pull
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      - rag-network
+    entrypoint: >
+      sh -c "
+        echo 'Pulling qwen2.5:3b model...' &&
+        curl -s http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:3b\"}' &&
+        echo 'Model pull complete!'
+      "
+    restart: "no"
+
+# =========================
+# Volumes
+# =========================
+volumes:
+  chroma_data:
+    driver: local
+  ollama_data:
+    driver: local
+  model_cache:
+    driver: local
+
+# =========================
+# Networks
+# =========================
+networks:
+  rag-network:
+    driver: bridge

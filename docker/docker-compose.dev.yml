@@ -1,0 +1,42 @@
+version: "3.8"
+
+services:
+  rag-api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.dev
+    container_name: rag-api-dev
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=true
+      - API_HOST=0.0.0.0
+      - API_PORT=8000
+      - LLM_PROVIDER=ollama
+      - OLLAMA_MODEL=qwen2.5:3b
+      - OLLAMA_BASE_URL=http://host.docker.internal:11434
+      - USE_LOCAL_EMBEDDINGS=true
+      - EMBEDDING_MODEL=sentence-transformers/all-MiniLM-L6-v2
+      - CHROMA_PERSIST_DIRECTORY=/app/data/chroma_db
+      - COLLECTION_NAME=documents
+      - CHUNK_SIZE=1000
+      - CHUNK_OVERLAP=200
+    volumes:
+      - ../src:/app/src
+      - chroma_data_dev:/app/data/chroma_db
+      - model_cache:/root/.cache
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - rag-network-dev
+    restart: unless-stopped
+
+volumes:
+  chroma_data_dev:
+    driver: local
+  model_cache:
+    driver: local
+
+networks:
+  rag-network-dev:
+    driver: bridge
