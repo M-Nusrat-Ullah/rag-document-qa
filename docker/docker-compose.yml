@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # =========================
   # RAG API Service
@@ -33,12 +31,6 @@ services:
     networks:
       - rag-network
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 30s
-      timeout: 10s
-      start_period: 90s
-      retries: 3
 
   # =========================
   # Ollama LLM Service
@@ -54,7 +46,7 @@ services:
       - rag-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 15s
       timeout: 10s
       start_period: 30s
@@ -68,24 +60,18 @@ services:
   # Model Puller (one-time setup)
   # =========================
   ollama-pull:
-    image: curlimages/curl:latest
+    image: ollama/ollama:latest
     container_name: ollama-pull
     depends_on:
       ollama:
         condition: service_healthy
     networks:
       - rag-network
-    entrypoint: >
-      sh -c "
-        echo 'Pulling qwen2.5:3b model...' &&
-        curl -s http://ollama:11434/api/pull -d '{\"name\": \"qwen2.5:3b\"}' &&
-        echo 'Model pull complete!'
-      "
+    entrypoint: ["ollama", "pull", "qwen2.5:3b"]
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
     restart: "no"
 
-# =========================
-# Volumes
-# =========================
 volumes:
   chroma_data:
     driver: local
@@ -94,9 +80,6 @@ volumes:
   model_cache:
     driver: local
 
-# =========================
-# Networks
-# =========================
 networks:
   rag-network:
     driver: bridge
