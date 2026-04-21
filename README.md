@@ -6,6 +6,7 @@
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange?style=flat)
 ![Ollama](https://img.shields.io/badge/Ollama-Local_LLM-black?style=flat)
+![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?style=flat&logo=docker&logoColor=white)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat)
 
 ---
@@ -23,7 +24,7 @@ A production-grade RAG system that allows users to upload documents (PDF, TXT, M
 - 📊 **Vector Search** - ChromaDB with cosine similarity
 - 🚀 **REST API** - FastAPI with auto-generated Swagger documentation
 - ❤️ **Health Checks** - Kubernetes-ready liveness and readiness probes
-- 🐳 **Docker Ready** - Containerized deployment (Phase 2)
+- 🐳 **Dockerized** - Full Docker Compose stack (API + Ollama + auto model pull)
 - ☸️ **K8s Ready** - Kubernetes manifests (Phase 4)
 
 ---
@@ -48,34 +49,65 @@ Client → FastAPI REST API → RAG Pipeline → Vector Search + LLM Service →
 | **Embeddings**          | sentence-transformers/all-MiniLM-L6-v2 |
 | **Vector Store**        | ChromaDB                               |
 | **Document Processing** | PyPDF, langchain-text-splitters        |
+| **Containerization**    | Docker, Docker Compose                 |
 | **Language**            | Python 3.12                            |
 
 ---
 
 ## 📦 Project Structure
 
-| Path                               | Description                     |
-| ---------------------------------- | ------------------------------- |
-| src/api/main.py                    | FastAPI application entry point |
-| src/api/routes/health.py           | Health check endpoints          |
-| src/api/routes/documents.py        | Document management endpoints   |
-| src/api/routes/query.py            | Q&A query endpoints             |
-| src/api/schemas/document.py        | Document Pydantic models        |
-| src/api/schemas/query.py           | Query Pydantic models           |
-| src/core/config.py                 | Application configuration       |
-| src/core/logging.py                | Logging setup                   |
-| src/services/document_processor.py | Document loading and chunking   |
-| src/services/embedding_service.py  | Vector embedding generation     |
-| src/services/vector_store.py       | ChromaDB operations             |
-| src/services/llm_service.py        | Multi-LLM integration           |
-| src/services/rag_pipeline.py       | Main RAG orchestration          |
-| docker/                            | Docker configuration            |
-| kubernetes/                        | K8s deployment manifests        |
-| tests/                             | Test suite                      |
+| Path                               | Description                        |
+| ---------------------------------- | ---------------------------------- |
+| src/api/main.py                    | FastAPI application entry point    |
+| src/api/routes/health.py           | Health check endpoints             |
+| src/api/routes/documents.py        | Document management endpoints      |
+| src/api/routes/query.py            | Q&A query endpoints                |
+| src/api/schemas/document.py        | Document Pydantic models           |
+| src/api/schemas/query.py           | Query Pydantic models              |
+| src/core/config.py                 | Application configuration          |
+| src/core/logging.py                | Logging setup                      |
+| src/services/document_processor.py | Document loading and chunking      |
+| src/services/embedding_service.py  | Vector embedding generation        |
+| src/services/vector_store.py       | ChromaDB operations                |
+| src/services/llm_service.py        | Multi-LLM integration              |
+| src/services/rag_pipeline.py       | Main RAG orchestration             |
+| docker/Dockerfile                  | Production container image         |
+| docker/Dockerfile.dev              | Development container (hot reload) |
+| docker/docker-compose.yml          | Full stack deployment              |
+| docker/docker-compose.dev.yml      | Development deployment             |
+| kubernetes/                        | K8s deployment manifests           |
+| tests/                             | Test suite                         |
 
 ---
 
 ## 🚀 Quick Start
+
+### Option 1: Docker Compose (Recommended)
+
+The fastest way to get started — no local Python or Ollama setup needed.
+
+# Clone the repository
+
+    git clone https://github.com/M-Nusrat-Ullah/rag-document-qa.git
+    cd rag-document-qa
+
+# Start everything (API + Ollama + auto model pull)
+
+    docker compose -f docker/docker-compose.yml up --build -d
+
+# Watch logs (wait for "Application startup complete")
+
+    docker compose -f docker/docker-compose.yml logs -f
+
+The stack will:
+
+1. Start Ollama server
+2. Automatically pull the `qwen2.5:3b` model
+3. Start the RAG API
+
+Open **http://localhost:8000/docs** when ready.
+
+### Option 2: Local Development
 
 ### Prerequisites
 
@@ -108,9 +140,55 @@ Client → FastAPI REST API → RAG Pipeline → Vector Search + LLM Service →
 
 ### 6. Open API Documentation
 
-Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
+    Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
 
 ---
+
+## 🐳 Docker
+
+### Production Stack
+
+# Start all services
+
+    make docker-run
+
+# View logs
+
+    make docker-logs
+
+# Check status
+
+    make docker-status
+
+# Stop all services
+
+    make docker-down
+
+### Development Mode (Hot Reload)
+
+    Uses your host Ollama instance and mounts source code for live reloading:
+
+# Start dev mode
+
+    make docker-dev
+
+# Stop dev mode
+
+    make docker-dev-down
+
+### Docker Services
+
+| Service     | Description                        | Port  |
+| ----------- | ---------------------------------- | ----- |
+| rag-api     | FastAPI application                | 8000  |
+| ollama      | Ollama LLM server                  | 11434 |
+| ollama-pull | One-time model puller (auto-exits) | -     |
+
+### Cleanup
+
+# Remove containers, volumes, and images
+
+    make docker-clean
 
 ## 📖 API Endpoints
 
@@ -202,7 +280,7 @@ Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
 ## 🗺️ Roadmap
 
 - [x] Phase 1: Core RAG Application
-- [ ] Phase 2: Docker and Docker Compose
+- [x] Phase 2: Docker and Docker Compose
 - [ ] Phase 3: MLflow Experiment Tracking
 - [ ] Phase 4: Kubernetes Deployment
 - [ ] Phase 5: Kubeflow ML Pipeline
