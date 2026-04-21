@@ -30,61 +30,48 @@ A production-grade RAG system that allows users to upload documents (PDF, TXT, M
 
 ## 🏗️ Architecture
 
-````mermaid
-flowchart LR
-    Client[🖥️ Client] --> API[⚡ FastAPI]
-    API --> DP[📄 Document Processor]
-    API --> RAG[🧠 RAG Pipeline]
-    DP --> ES[🔢 Embedding Service]
-    ES --> VS[(🗄️ ChromaDB)]
-    RAG --> VS
-    RAG --> ES
-    RAG --> LLM[🤖 LLM Service]
-    LLM --> Ollama[Ollama - Local]
-    LLM --> OpenAI[OpenAI]
-    LLM --> Gemini[Google Gemini]
-    LLM --> DeepSeek[DeepSeek]
+Client → FastAPI REST API → Document Processor → Embedding Service → ChromaDB (Vector Store)
 
+Client → FastAPI REST API → RAG Pipeline → Vector Search + LLM Service → Response
+
+**Supported LLM Backends:** Ollama (Local) | OpenAI | Google Gemini | DeepSeek
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Component | Technology |
-|-----------|-----------|
-| **API Framework** | FastAPI |
-| **LLM (Local)** | Ollama (Qwen2.5, DeepSeek) |
-| **LLM (Cloud)** | OpenAI, Google Gemini, DeepSeek API |
-| **Embeddings** | sentence-transformers/all-MiniLM-L6-v2 |
-| **Vector Store** | ChromaDB |
-| **Document Processing** | PyPDF, langchain-text-splitters |
-| **Language** | Python 3.12 |
+| Component               | Technology                             |
+| ----------------------- | -------------------------------------- |
+| **API Framework**       | FastAPI                                |
+| **LLM (Local)**         | Ollama (Qwen2.5, DeepSeek)             |
+| **LLM (Cloud)**         | OpenAI, Google Gemini, DeepSeek API    |
+| **Embeddings**          | sentence-transformers/all-MiniLM-L6-v2 |
+| **Vector Store**        | ChromaDB                               |
+| **Document Processing** | PyPDF, langchain-text-splitters        |
+| **Language**            | Python 3.12                            |
 
 ---
 
-```markdown
 ## 📦 Project Structure
 
-| Path | Description |
-|------|-------------|
-| `src/api/main.py` | FastAPI application entry point |
-| `src/api/routes/health.py` | Health check endpoints |
-| `src/api/routes/documents.py` | Document management endpoints |
-| `src/api/routes/query.py` | Q&A query endpoints |
-| `src/api/schemas/document.py` | Document Pydantic models |
-| `src/api/schemas/query.py` | Query Pydantic models |
-| `src/core/config.py` | Application configuration |
-| `src/core/logging.py` | Logging setup |
-| `src/services/document_processor.py` | Document loading & chunking |
-| `src/services/embedding_service.py` | Vector embedding generation |
-| `src/services/vector_store.py` | ChromaDB operations |
-| `src/services/llm_service.py` | Multi-LLM integration |
-| `src/services/rag_pipeline.py` | Main RAG orchestration |
-| `docker/` | Docker configuration |
-| `kubernetes/` | K8s deployment manifests |
-| `kubeflow/` | ML pipeline (future) |
-| `tests/` | Test suite |
-
+| Path                               | Description                     |
+| ---------------------------------- | ------------------------------- |
+| src/api/main.py                    | FastAPI application entry point |
+| src/api/routes/health.py           | Health check endpoints          |
+| src/api/routes/documents.py        | Document management endpoints   |
+| src/api/routes/query.py            | Q&A query endpoints             |
+| src/api/schemas/document.py        | Document Pydantic models        |
+| src/api/schemas/query.py           | Query Pydantic models           |
+| src/core/config.py                 | Application configuration       |
+| src/core/logging.py                | Logging setup                   |
+| src/services/document_processor.py | Document loading and chunking   |
+| src/services/embedding_service.py  | Vector embedding generation     |
+| src/services/vector_store.py       | ChromaDB operations             |
+| src/services/llm_service.py        | Multi-LLM integration           |
+| src/services/rag_pipeline.py       | Main RAG orchestration          |
+| docker/                            | Docker configuration            |
+| kubernetes/                        | K8s deployment manifests        |
+| tests/                             | Test suite                      |
 
 ---
 
@@ -97,134 +84,148 @@ flowchart LR
 
 ### 1. Clone the Repository
 
-```bash
-git clone https://github.com/M-Nusrat-Ullah/rag-document-qa.git
-cd rag-document-qa
+    git clone https://github.com/M-Nusrat-Ullah/rag-document-qa.git
+    cd rag-document-qa
 
+### 2. Install Ollama and Pull Model
 
-2. Install Ollama & Pull Model
-bash
-# Install Ollama
-curl -fsSL https://ollama.com/install.sh | sh
+    curl -fsSL https://ollama.com/install.sh | sh
+    ollama pull qwen2.5:3b
 
-# Pull a model
-ollama pull qwen2.5:3b
+### 3. Setup Python Environment
 
-3. Setup Python Environment
-bash
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# or: venv\Scripts\activate  # Windows
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
 
-pip install -r requirements.txt
+### 4. Configure Environment
 
-4. Configure Environment
-bash
-cp .env.example .env
-# Edit .env with your settings
+    cp .env.example .env
 
-5. Run the Application
-bash
-uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
+### 5. Run the Application
 
-6. Open API Documentation
-Navigate to: http://localhost:8000/docs
+    uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 
-📖 API Endpoints
+### 6. Open API Documentation
 
-Health
-Method	Endpoint	Description
-GET	/health	Health check
-GET	/health/ready	Readiness probe
-GET	/health/live	Liveness probe
+Navigate to [http://localhost:8000/docs](http://localhost:8000/docs)
 
-Documents
-Method	Endpoint	Description
-POST	/documents/upload	Upload a document (PDF, TXT, MD)
-POST	/documents/ingest-text	Ingest raw text
-GET	/documents/stats	Get document store statistics
-DELETE	/documents/clear	Clear all documents
+---
 
-Query
-Method	Endpoint	Description
-POST	/query	Ask a question about ingested documents
+## 📖 API Endpoints
 
-💡 Usage Examples
+### Health
 
-Ingest Text
-bash
-curl -X POST http://localhost:8000/documents/ingest-text \
-  -H "Content-Type: application/json" \
-  -d '{
-    "text": "Python is a programming language created by Guido van Rossum in 1991.",
-    "title": "About Python"
-  }'
+| Method | Endpoint      | Description     |
+| ------ | ------------- | --------------- |
+| GET    | /health       | Health check    |
+| GET    | /health/ready | Readiness probe |
+| GET    | /health/live  | Liveness probe  |
 
-Upload a PDF
-bash
-curl -X POST http://localhost:8000/documents/upload \
-  -F "file=@document.pdf" \
-  -F "title=My Document"
+### Documents
 
-Ask a Question
-bash
-curl -X POST http://localhost:8000/query \
-  -H "Content-Type: application/json" \
-  -d '{
-    "question": "Who created Python?",
-    "k": 3
-  }'
+| Method | Endpoint               | Description                      |
+| ------ | ---------------------- | -------------------------------- |
+| POST   | /documents/upload      | Upload a document (PDF, TXT, MD) |
+| POST   | /documents/ingest-text | Ingest raw text                  |
+| GET    | /documents/stats       | Get document store statistics    |
+| DELETE | /documents/clear       | Clear all documents              |
 
-Response
-json
-{
-  "answer": "Guido van Rossum created Python.",
-  "query": "Who created Python?",
-  "sources": [
+### Query
+
+| Method | Endpoint | Description                             |
+| ------ | -------- | --------------------------------------- |
+| POST   | /query   | Ask a question about ingested documents |
+
+---
+
+## 💡 Usage Examples
+
+### Ingest Text
+
+    curl -X POST http://localhost:8000/documents/ingest-text \
+      -H "Content-Type: application/json" \
+      -d '{"text": "Python is a programming language created by Guido van Rossum in 1991.", "title": "About Python"}'
+
+### Upload a PDF
+
+    curl -X POST http://localhost:8000/documents/upload \
+      -F "file=@document.pdf" \
+      -F "title=My Document"
+
+### Ask a Question
+
+    curl -X POST http://localhost:8000/query \
+      -H "Content-Type: application/json" \
+      -d '{"question": "Who created Python?", "k": 3}'
+
+### Response
+
     {
-      "content": "Python is a programming language created by Guido van Rossum...",
-      "metadata": {"title": "About Python", "source": "text_input"},
-      "relevance_score": 0.799
+      "answer": "Guido van Rossum created Python.",
+      "query": "Who created Python?",
+      "sources": [
+        {
+          "content": "Python is a programming language created by Guido van Rossum...",
+          "metadata": {"title": "About Python", "source": "text_input"},
+          "relevance_score": 0.799
+        }
+      ],
+      "model_used": "qwen2.5:3b"
     }
-  ],
-  "model_used": "qwen2.5:3b"
-}
 
-🔧 Configuration
-LLM Providers
-Provider	Config	Cost
-Ollama (default)	LLM_PROVIDER=ollama	Free (local)
-OpenAI	LLM_PROVIDER=openai	Paid API
-Google Gemini	LLM_PROVIDER=google	Free tier available
-DeepSeek	LLM_PROVIDER=deepseek	Free credits on signup
+---
 
-Environment Variables
-Variable	Default	Description
-LLM_PROVIDER	ollama	LLM provider to use
-OLLAMA_MODEL	qwen2.5:3b	Ollama model name
-USE_LOCAL_EMBEDDINGS	true	Use local embeddings
-CHUNK_SIZE	1000	Document chunk size
-CHUNK_OVERLAP	200	Chunk overlap size
+## 🔧 Configuration
 
+### LLM Providers
 
-🗺️ Roadmap
- Phase 1: Core RAG Application
- Phase 2: Docker & Docker Compose
- Phase 3: MLflow Experiment Tracking
- Phase 4: Kubernetes Deployment
- Phase 5: Kubeflow ML Pipeline
- Phase 6: Streamlit Frontend UI
+| Provider             | Config                | Cost                   |
+| -------------------- | --------------------- | ---------------------- |
+| **Ollama** (default) | LLM_PROVIDER=ollama   | Free (local)           |
+| **OpenAI**           | LLM_PROVIDER=openai   | Paid API               |
+| **Google Gemini**    | LLM_PROVIDER=google   | Free tier available    |
+| **DeepSeek**         | LLM_PROVIDER=deepseek | Free credits on signup |
 
-🤝 Contributing
+### Environment Variables
+
+| Variable             | Default    | Description          |
+| -------------------- | ---------- | -------------------- |
+| LLM_PROVIDER         | ollama     | LLM provider to use  |
+| OLLAMA_MODEL         | qwen2.5:3b | Ollama model name    |
+| USE_LOCAL_EMBEDDINGS | true       | Use local embeddings |
+| CHUNK_SIZE           | 1000       | Document chunk size  |
+| CHUNK_OVERLAP        | 200        | Chunk overlap size   |
+
+---
+
+## 🗺️ Roadmap
+
+- [x] Phase 1: Core RAG Application
+- [ ] Phase 2: Docker and Docker Compose
+- [ ] Phase 3: MLflow Experiment Tracking
+- [ ] Phase 4: Kubernetes Deployment
+- [ ] Phase 5: Kubeflow ML Pipeline
+- [ ] Phase 6: Streamlit Frontend UI
+
+---
+
+## 🤝 Contributing
+
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+---
 
-👤 Author
-M. Nusrat Ullah
+## 📄 License
 
-GitHub: @M-Nusrat-Ullah
-LinkedIn: nusrat-ullah-tahmid
-Email: nusrat.ullah.tahmid@gmail.com
-````
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 👤 Author
+
+**M. Nusrat Ullah**
+
+- GitHub: [@M-Nusrat-Ullah](https://github.com/M-Nusrat-Ullah)
+- LinkedIn: [nusrat-ullah-tahmid](https://www.linkedin.com/in/nusrat-ullah-tahmid)
+- Email: nusrat.ullah.tahmid@gmail.com

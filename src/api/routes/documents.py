@@ -29,7 +29,7 @@ async def upload_document(
 ):
     """Upload and ingest a document (PDF, TXT, MD)."""
     allowed_extensions = {".pdf", ".txt", ".md"}
-    file_ext = os.path.splitext(file.filename)[1].lower()
+    file_ext = os.path.splitext(file.filename or "")[1].lower()
 
     if file_ext not in allowed_extensions:
         raise HTTPException(
