@@ -1,4 +1,4 @@
-.PHONY: install run dev test lint docker-build docker-run docker-dev docker-down clean
+.PHONY: install run dev test lint docker-build docker-run docker-dev docker-down clean mlflow
 
 # ==================
 # Local Development
@@ -21,6 +21,13 @@ lint:
 	isort src/ tests/
 
 # ==================
+# MLflow
+# ==================
+
+mlflow:
+	mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///data/mlflow.db --default-artifact-root ./data/mlflow-artifacts
+
+# ==================
 # Docker - Production
 # ==================
 
@@ -31,8 +38,9 @@ docker-run:
 	docker compose -f docker/docker-compose.yml up -d
 	@echo "Waiting for services to start..."
 	@sleep 10
-	@echo "RAG API: http://localhost:8000/docs"
-	@echo "Ollama: http://localhost:11434"
+	@echo "RAG API:  http://localhost:8000/docs"
+	@echo "Ollama:   http://localhost:11434"
+	@echo "MLflow:   http://localhost:5000"
 
 docker-down:
 	docker compose -f docker/docker-compose.yml down

@@ -21,6 +21,9 @@ langchain-text-splitters>=0.3.0
 sentence-transformers>=3.4.0
 torch>=2.0.0
 
+# Experiment Tracking
+mlflow>=2.18.0
+
 # Utilities
 python-dotenv>=1.0.0
 httpx>=0.28.0

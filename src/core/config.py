@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     chunk_size: int = 1000
     chunk_overlap: int = 200
 
+    # MLflow Settings
+    mlflow_enabled: bool = True
+    mlflow_tracking_uri: str = "http://localhost:5000"
+    mlflow_experiment_name: str = "rag-document-qa"
+
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
