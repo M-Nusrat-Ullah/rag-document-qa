@@ -281,7 +281,7 @@ Open **http://localhost:8000/docs** when ready.
 
 - [x] Phase 1: Core RAG Application
 - [x] Phase 2: Docker and Docker Compose
-- [ ] Phase 3: MLflow Experiment Tracking
+- [x] Phase 3: MLflow Experiment Tracking
 - [ ] Phase 4: Kubernetes Deployment
 - [ ] Phase 5: Kubeflow ML Pipeline
 - [ ] Phase 6: Streamlit Frontend UI
