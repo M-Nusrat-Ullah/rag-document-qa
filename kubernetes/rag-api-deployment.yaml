@@ -1,0 +1,83 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-api
+  namespace: rag-app
+  labels:
+    app: rag-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-api
+  template:
+    metadata:
+      labels:
+        app: rag-api
+    spec:
+      initContainers:
+        # Wait for Ollama to be ready and pull model
+        - name: wait-for-ollama
+          image: curlimages/curl:latest
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for Ollama..."
+              until curl -s http://ollama-service:11434/api/tags > /dev/null 2>&1; do
+                echo "Ollama not ready, waiting..."
+                sleep 5
+              done
+              echo "Ollama is ready! Pulling model..."
+              curl -s http://ollama-service:11434/api/pull -d '{"name": "qwen2.5:3b"}'
+              echo "Model pull complete!"
+      containers:
+        - name: rag-api
+          image: rag-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+              protocol: TCP
+          envFrom:
+            - configMapRef:
+                name: rag-api-config
+          volumeMounts:
+            - name: chroma-data
+              mountPath: /app/data/chroma_db
+            - name: model-cache
+              mountPath: /root/.cache
+          resources:
+            requests:
+              memory: "1Gi"
+              cpu: "500m"
+            limits:
+              memory: "2Gi"
+              cpu: "1000m"
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8000
+            initialDelaySeconds: 120
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8000
+            initialDelaySeconds: 90
+            periodSeconds: 15
+            timeoutSeconds: 10
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 30
+      volumes:
+        - name: chroma-data
+          persistentVolumeClaim:
+            claimName: chroma-data-pvc
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: model-cache-pvc

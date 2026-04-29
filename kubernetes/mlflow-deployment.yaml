@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mlflow
+  namespace: rag-app
+  labels:
+    app: mlflow
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mlflow
+  template:
+    metadata:
+      labels:
+        app: mlflow
+    spec:
+      containers:
+        - name: mlflow
+          image: python:3.12-slim
+          ports:
+            - containerPort: 5000
+              protocol: TCP
+          command:
+            - bash
+            - -c
+            - |
+              pip install mlflow>=2.18.0 --quiet &&
+              mlflow server \
+                --host 0.0.0.0 \
+                --port 5000 \
+                --backend-store-uri sqlite:///mlflow/mlflow.db \
+                --default-artifact-root /mlflow/artifacts
+          volumeMounts:
+            - name: mlflow-data
+              mountPath: /mlflow
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 60
+            periodSeconds: 15
+            timeoutSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 90
+            periodSeconds: 30
+            timeoutSeconds: 10
+      volumes:
+        - name: mlflow-data
+          persistentVolumeClaim:
+            claimName: mlflow-data-pvc

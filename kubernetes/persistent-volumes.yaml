@@ -1,0 +1,62 @@
+# ChromaDB Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: chroma-data-pvc
+  namespace: rag-app
+  labels:
+    app: rag-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Ollama Models Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ollama-data-pvc
+  namespace: rag-app
+  labels:
+    app: ollama
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+
+---
+# MLflow Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mlflow-data-pvc
+  namespace: rag-app
+  labels:
+    app: mlflow
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+
+---
+# Model Cache Storage
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: model-cache-pvc
+  namespace: rag-app
+  labels:
+    app: rag-api
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi

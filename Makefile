@@ -62,6 +62,36 @@ docker-dev-down:
 	docker compose -f docker/docker-compose.dev.yml down
 
 # ==================
+# Kubernetes
+# ==================
+
+k8s-deploy:
+	bash kubernetes/deploy.sh
+
+k8s-teardown:
+	bash kubernetes/teardown.sh
+
+k8s-status:
+	kubectl get all -n rag-app
+
+k8s-logs-api:
+	kubectl logs -f deployment/rag-api -n rag-app
+
+k8s-logs-ollama:
+	kubectl logs -f deployment/ollama -n rag-app
+
+k8s-logs-mlflow:
+	kubectl logs -f deployment/mlflow -n rag-app
+
+k8s-port-forward:
+	@echo "RAG API:  http://localhost:8000"
+	@echo "MLflow:   http://localhost:5000"
+	@echo "Ollama:   http://localhost:11434"
+	kubectl port-forward svc/rag-api-service 8000:8000 -n rag-app &
+	kubectl port-forward svc/mlflow-service 5000:5000 -n rag-app &
+	kubectl port-forward svc/ollama-service 11434:11434 -n rag-app &
+
+# ==================
 # Cleanup
 # ==================
 

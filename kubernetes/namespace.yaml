@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rag-app
+  labels:
+    app: rag-document-qa
+    project: rag-app
