@@ -92,6 +92,13 @@ k8s-port-forward:
 	kubectl port-forward svc/ollama-service 11434:11434 -n rag-app &
 
 # ==================
+# Streamlit Frontend
+# ==================
+
+streamlit:
+	streamlit run src/frontend/app.py
+
+# ==================
 # Cleanup
 # ==================
 

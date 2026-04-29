@@ -24,6 +24,10 @@ torch>=2.0.0
 # Experiment Tracking
 mlflow>=2.18.0
 
+# Frontend
+streamlit>=1.40.0
+requests>=2.32.0
+
 # Utilities
 python-dotenv>=1.0.0
 httpx>=0.28.0

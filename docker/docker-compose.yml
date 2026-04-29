@@ -62,7 +62,7 @@ services:
           memory: 4G
 
   # =========================
-  # Model Puller (one-time setup)
+  # Model Puller (one-time)
   # =========================
   ollama-pull:
     image: ollama/ollama:latest
@@ -105,6 +105,24 @@ services:
       timeout: 10s
       start_period: 60s
       retries: 5
+
+  # =========================
+  # Streamlit Frontend
+  # =========================
+  streamlit:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.streamlit
+    container_name: streamlit
+    ports:
+      - "8501:8501"
+    environment:
+      - API_BASE_URL=http://rag-api:8000
+    depends_on:
+      - rag-api
+    networks:
+      - rag-network
+    restart: unless-stopped
 
 volumes:
   chroma_data:
