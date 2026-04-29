@@ -190,6 +190,66 @@ Open **http://localhost:8000/docs** when ready.
 
     make docker-clean
 
+
+## ☸️ Kubernetes
+
+### Prerequisites
+
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) configured
+- A Kubernetes cluster (Minikube, Kind, or cloud)
+- RAG API Docker image built locally
+
+### Quick Deploy
+
+```bash
+# Build the RAG API image first
+docker build -t rag-api:latest -f docker/Dockerfile .
+
+# Deploy everything
+make k8s-deploy
+
+Manual Deploy
+
+kubectl apply -f kubernetes/namespace.yaml
+kubectl apply -f kubernetes/rag-api-configmap.yaml
+kubectl apply -f kubernetes/persistent-volumes.yaml
+kubectl apply -f kubernetes/ollama-deployment.yaml
+kubectl apply -f kubernetes/ollama-service.yaml
+kubectl apply -f kubernetes/mlflow-deployment.yaml
+kubectl apply -f kubernetes/mlflow-service.yaml
+kubectl apply -f kubernetes/rag-api-deployment.yaml
+kubectl apply -f kubernetes/rag-api-service.yaml
+
+
+Access Services
+
+# RAG API (NodePort)
+http://localhost:30080/docs
+
+# Port forward MLflow and Ollama
+kubectl port-forward svc/mlflow-service 5000:5000 -n rag-app
+kubectl port-forward svc/ollama-service 11434:11434 -n rag-app
+
+
+Useful Commands
+
+# Check status
+make k8s-status
+
+# View logs
+make k8s-logs-api
+make k8s-logs-ollama
+make k8s-logs-mlflow
+
+# Teardown
+make k8s-teardown
+Architecture
+Service	Image	Port	Type
+rag-api	rag-api:latest	30080	NodePort
+ollama	ollama/ollama	11434	ClusterIP
+mlflow	python:3.12-slim	5000	ClusterIP
+
+
 ## 📖 API Endpoints
 
 ### Health
