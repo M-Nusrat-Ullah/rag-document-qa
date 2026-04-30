@@ -15,6 +15,17 @@
 
 A production-grade RAG system that allows users to upload documents (PDF, TXT, MD), ingest text, and ask natural language questions. The system retrieves relevant context from stored documents and generates accurate answers using LLMs.
 
+## 📸 Screenshots
+
+### Chat Interface
+
+![Chat Interface](screenshots/webui_question_page.png)
+![Upload Interface](screenshots/webui_upload_page.png)
+
+### MLflow Tracking
+
+![MLflow Dashboard](screenshots/mlflow.png)
+
 ### Key Features
 
 - 🔍 **Intelligent Document Q&A** - Ask questions and get answers from your documents
@@ -60,24 +71,24 @@ Client → FastAPI REST API → RAG Pipeline → Vector Search + LLM Service →
 
 ## 📦 Project Structure
 
-| Path                               | Description                        |
-| ---------------------------------- | ---------------------------------- |
-| src/api/main.py                    | FastAPI application entry point    |
-| src/api/routes/health.py           | Health check endpoints             |
-| src/api/routes/documents.py        | Document management endpoints      |
-| src/api/routes/query.py            | Q&A query endpoints                |
-| src/api/schemas/                   | Pydantic request/response models   |
-| src/core/config.py                 | Application configuration          |
-| src/core/logging.py                | Logging setup                      |
-| src/services/document_processor.py | Document loading and chunking      |
-| src/services/embedding_service.py  | Vector embedding generation        |
-| src/services/vector_store.py       | ChromaDB operations                |
-| src/services/llm_service.py        | Multi-LLM integration              |
-| src/services/rag_pipeline.py       | Main RAG orchestration             |
-| src/services/experiment_tracker.py | MLflow experiment tracking         |
-| docker/                            | Docker configuration               |
-| kubernetes/                        | K8s deployment manifests           |
-| tests/                             | Test suite                         |
+| Path                               | Description                      |
+| ---------------------------------- | -------------------------------- |
+| src/api/main.py                    | FastAPI application entry point  |
+| src/api/routes/health.py           | Health check endpoints           |
+| src/api/routes/documents.py        | Document management endpoints    |
+| src/api/routes/query.py            | Q&A query endpoints              |
+| src/api/schemas/                   | Pydantic request/response models |
+| src/core/config.py                 | Application configuration        |
+| src/core/logging.py                | Logging setup                    |
+| src/services/document_processor.py | Document loading and chunking    |
+| src/services/embedding_service.py  | Vector embedding generation      |
+| src/services/vector_store.py       | ChromaDB operations              |
+| src/services/llm_service.py        | Multi-LLM integration            |
+| src/services/rag_pipeline.py       | Main RAG orchestration           |
+| src/services/experiment_tracker.py | MLflow experiment tracking       |
+| docker/                            | Docker configuration             |
+| kubernetes/                        | K8s deployment manifests         |
+| tests/                             | Test suite                       |
 
 ---
 
@@ -99,6 +110,7 @@ docker compose -f docker/docker-compose.yml logs -f
 ```
 
 The stack will:
+
 1. Start Ollama server
 2. Automatically pull the `qwen2.5:3b` model
 3. Start the RAG API
@@ -170,6 +182,29 @@ make docker-clean     # Remove containers, volumes, and images
 
 ---
 
+## 🎨 Streamlit Frontend
+
+A user-friendly UI for non-technical users to interact with the RAG system.
+
+### Features
+
+- 💬 **Chat Interface** - Ask questions and get AI answers
+- 📄 **Document Upload** - PDF, TXT, MD support
+- 📝 **Text Ingestion** - Paste raw text directly
+- 📊 **Live Stats** - Real-time document count and API health
+- 📚 **Source Citations** - View source documents with relevance scores
+
+### Run Locally
+
+````bash
+# Make sure the API is running (in another terminal)
+make run
+
+# Start Streamlit
+make streamlit
+
+---
+
 ## ☸️ Kubernetes
 
 ### Prerequisites
@@ -186,7 +221,7 @@ docker build -t rag-api:latest -f docker/Dockerfile .
 
 # Deploy everything
 make k8s-deploy
-```
+````
 
 ### Manual Deploy
 
@@ -225,11 +260,11 @@ make k8s-teardown     # Teardown everything
 
 ### K8s Architecture
 
-| Service  | Image            | Port  | Type      |
-| -------- | ---------------- | ----- | --------- |
-| rag-api  | rag-api:latest   | 30080 | NodePort  |
-| ollama   | ollama/ollama    | 11434 | ClusterIP |
-| mlflow   | python:3.12-slim | 5000  | ClusterIP |
+| Service | Image            | Port  | Type      |
+| ------- | ---------------- | ----- | --------- |
+| rag-api | rag-api:latest   | 30080 | NodePort  |
+| ollama  | ollama/ollama    | 11434 | ClusterIP |
+| mlflow  | python:3.12-slim | 5000  | ClusterIP |
 
 ---
 
@@ -243,10 +278,10 @@ make mlflow           # Starts MLflow at http://localhost:5000
 
 ### What's Tracked
 
-| Run Type            | Metrics                                          | Parameters                              |
-| ------------------- | ------------------------------------------------ | --------------------------------------- |
-| **RAG Query**       | latency, relevance scores, answer length, sources | LLM model, chunk size, top_k, embedding |
-| **Doc Ingestion**   | chunks created, total documents, latency          | source, title, file type, chunk size     |
+| Run Type          | Metrics                                           | Parameters                              |
+| ----------------- | ------------------------------------------------- | --------------------------------------- |
+| **RAG Query**     | latency, relevance scores, answer length, sources | LLM model, chunk size, top_k, embedding |
+| **Doc Ingestion** | chunks created, total documents, latency          | source, title, file type, chunk size    |
 
 Open **http://localhost:5000** → Select **Model Training** → **rag-document-qa** experiment.
 
@@ -314,7 +349,7 @@ curl -X POST http://localhost:8000/query \
   "sources": [
     {
       "content": "Python is a programming language created by Guido van Rossum...",
-      "metadata": {"title": "About Python", "source": "text_input"},
+      "metadata": { "title": "About Python", "source": "text_input" },
       "relevance_score": 0.799
     }
   ],
@@ -337,16 +372,16 @@ curl -X POST http://localhost:8000/query \
 
 ### Environment Variables
 
-| Variable                | Default                   | Description              |
-| ----------------------- | ------------------------- | ------------------------ |
-| LLM_PROVIDER            | ollama                    | LLM provider to use     |
-| OLLAMA_MODEL            | qwen2.5:3b                | Ollama model name        |
-| USE_LOCAL_EMBEDDINGS    | true                      | Use local embeddings     |
-| CHUNK_SIZE              | 1000                      | Document chunk size      |
-| CHUNK_OVERLAP           | 200                       | Chunk overlap size       |
-| MLFLOW_ENABLED          | true                      | Enable MLflow tracking   |
-| MLFLOW_TRACKING_URI     | http://localhost:5000      | MLflow server URL        |
-| MLFLOW_EXPERIMENT_NAME  | rag-document-qa            | MLflow experiment name   |
+| Variable               | Default               | Description            |
+| ---------------------- | --------------------- | ---------------------- |
+| LLM_PROVIDER           | ollama                | LLM provider to use    |
+| OLLAMA_MODEL           | qwen2.5:3b            | Ollama model name      |
+| USE_LOCAL_EMBEDDINGS   | true                  | Use local embeddings   |
+| CHUNK_SIZE             | 1000                  | Document chunk size    |
+| CHUNK_OVERLAP          | 200                   | Chunk overlap size     |
+| MLFLOW_ENABLED         | true                  | Enable MLflow tracking |
+| MLFLOW_TRACKING_URI    | http://localhost:5000 | MLflow server URL      |
+| MLFLOW_EXPERIMENT_NAME | rag-document-qa       | MLflow experiment name |
 
 ---
 
@@ -357,7 +392,7 @@ curl -X POST http://localhost:8000/query \
 - [x] Phase 3: MLflow Experiment Tracking
 - [x] Phase 4: Kubernetes Deployment
 - [ ] Phase 5: Kubeflow ML Pipeline
-- [ ] Phase 6: Streamlit Frontend UI
+- [x] Phase 6: Streamlit Frontend UI
 
 ---
 
