@@ -20,6 +20,9 @@ A production-grade RAG system that allows users to upload documents (PDF, TXT, M
 ### Chat Interface
 
 ![Chat Interface](screenshots/webui_question_page.png)
+
+### Upload Interface
+
 ![Upload Interface](screenshots/webui_upload_page.png)
 
 ### MLflow Tracking
