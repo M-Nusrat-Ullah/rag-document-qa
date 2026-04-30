@@ -27,7 +27,8 @@ A production-grade RAG system that allows users to upload documents (PDF, TXT, M
 
 ### MLflow Tracking
 
-![MLflow Dashboard](screenshots/mlflow.png)
+![MLflow Dashboard](screenshots/mlflow_runs.png)
+![MLflow Dashboard](screenshots/mlflow_run_details.png)
 
 ### Key Features
 
