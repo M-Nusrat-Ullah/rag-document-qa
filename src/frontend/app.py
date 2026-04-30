@@ -1,16 +1,16 @@
 """Streamlit frontend for RAG Document Q&A."""
 
-import streamlit as st
-import requests
+import os
 import time
+
+import requests
+import streamlit as st
 
 # ========================
 # Configuration
 # ========================
 
-API_BASE_URL = st.sidebar.text_input(
-    "API URL", value="http://localhost:8000", key="api_url"
-)
+DEFAULT_API_BASE_URL = os.getenv("API_BASE_URL", "http://localhost:8000")
 
 # ========================
 # Page Config
@@ -21,6 +21,13 @@ st.set_page_config(
     page_icon="🤖",
     layout="wide",
     initial_sidebar_state="expanded",
+)
+
+# Set API URL from sidebar
+API_BASE_URL = st.sidebar.text_input(
+    "API URL",
+    value=DEFAULT_API_BASE_URL,
+    key="api_url",
 )
 
 # ========================
