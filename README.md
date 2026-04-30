@@ -272,13 +272,39 @@ make k8s-teardown     # Teardown everything
 
 ---
 
+`````markdown
+## 🔄 Kubeflow ML Pipeline
+
+Automated end-to-end document ingestion pipeline using Kubeflow Pipelines (KFP) v2.
+
+### Pipeline Components
+
+| Step | Component           | Function                                        |
+| ---- | ------------------- | ----------------------------------------------- |
+| 1    | Load Documents      | Read PDF/TXT/MD files                           |
+| 2    | Process & Chunk     | Split text using RecursiveCharacterTextSplitter |
+| 3    | Generate Embeddings | Create vectors with sentence-transformers       |
+| 4    | Store in ChromaDB   | Persist to vector store                         |
+| 5    | Validate            | Verify ingestion success                        |
+
+### Compile the Pipeline
+
+````bash
+cd kubeflow
+python compile_pipeline.py
+
+---
+
 ## 📈 MLflow Experiment Tracking
 
 ### Start MLflow Server
 
 ```bash
 make mlflow           # Starts MLflow at http://localhost:5000
-```
+````
+`````
+
+````
 
 ### What's Tracked
 
@@ -395,7 +421,7 @@ curl -X POST http://localhost:8000/query \
 - [x] Phase 2: Docker and Docker Compose
 - [x] Phase 3: MLflow Experiment Tracking
 - [x] Phase 4: Kubernetes Deployment
-- [ ] Phase 5: Kubeflow ML Pipeline
+- [x] Phase 5: Kubeflow ML Pipeline
 - [x] Phase 6: Streamlit Frontend UI
 
 ---
@@ -419,3 +445,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - GitHub: [@M-Nusrat-Ullah](https://github.com/M-Nusrat-Ullah)
 - LinkedIn: [nusrat-ullah-tahmid](https://www.linkedin.com/in/nusrat-ullah-tahmid)
 - Email: nusrat.ullah.tahmid@gmail.com
+````

@@ -28,6 +28,9 @@ mlflow>=2.18.0
 streamlit>=1.40.0
 requests>=2.32.0
 
+# ML Pipelines
+kfp>=2.10.0
+
 # Utilities
 python-dotenv>=1.0.0
 httpx>=0.28.0

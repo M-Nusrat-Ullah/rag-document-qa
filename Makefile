@@ -92,6 +92,16 @@ k8s-port-forward:
 	kubectl port-forward svc/ollama-service 11434:11434 -n rag-app &
 
 # ==================
+# Kubeflow Pipeline
+# ==================
+
+kfp-compile:
+	cd kubeflow && python compile_pipeline.py
+
+kfp-install:
+	pip install kfp>=2.10.0
+
+# ==================
 # Streamlit Frontend
 # ==================
 
