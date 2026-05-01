@@ -1,0 +1,553 @@
+# PIPELINE DEFINITION
+# Name: rag-document-ingestion-pipeline
+# Description: End-to-end RAG document ingestion pipeline
+# Inputs:
+#    chunk_overlap: int [Default: 200.0]
+#    chunk_size: int [Default: 1000.0]
+#    collection_name: str [Default: 'documents']
+#    embedding_model: str [Default: 'sentence-transformers/all-MiniLM-L6-v2']
+#    min_expected_docs: int [Default: 1.0]
+#    persist_directory: str [Default: '/data/chroma_db']
+#    source_path: str [Default: '/data/documents']
+components:
+  comp-generate-embeddings:
+    executorLabel: exec-generate-embeddings
+    inputDefinitions:
+      artifacts:
+        chunks_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+          description: Input chunks JSON
+      parameters:
+        model_name:
+          defaultValue: sentence-transformers/all-MiniLM-L6-v2
+          description: Hugging Face model name
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        embeddings_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        dimension:
+          description: Embedding vector dimension
+          parameterType: NUMBER_INTEGER
+        embedding_count:
+          description: Total embeddings generated
+          parameterType: NUMBER_INTEGER
+  comp-load-documents:
+    executorLabel: exec-load-documents
+    inputDefinitions:
+      parameters:
+        source_path:
+          description: Path to source files (PDF, TXT, MD)
+          parameterType: STRING
+    outputDefinitions:
+      artifacts:
+        output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        file_count:
+          description: Number of files loaded
+          parameterType: NUMBER_INTEGER
+        total_size_kb:
+          description: Total size in KB
+          parameterType: NUMBER_DOUBLE
+  comp-process-documents:
+    executorLabel: exec-process-documents
+    inputDefinitions:
+      artifacts:
+        input_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+          description: Input documents JSON
+      parameters:
+        chunk_overlap:
+          defaultValue: 200.0
+          description: Overlap between chunks
+          isOptional: true
+          parameterType: NUMBER_INTEGER
+        chunk_size:
+          defaultValue: 1000.0
+          description: Maximum chunk size in characters
+          isOptional: true
+          parameterType: NUMBER_INTEGER
+    outputDefinitions:
+      artifacts:
+        output_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+      parameters:
+        avg_chunk_size:
+          description: Average chunk size in characters
+          parameterType: NUMBER_DOUBLE
+        chunk_count:
+          description: Total number of chunks created
+          parameterType: NUMBER_INTEGER
+  comp-store-in-vector-db:
+    executorLabel: exec-store-in-vector-db
+    inputDefinitions:
+      artifacts:
+        embeddings_path:
+          artifactType:
+            schemaTitle: system.Artifact
+            schemaVersion: 0.0.1
+          description: Input embeddings JSON
+      parameters:
+        collection_name:
+          defaultValue: documents
+          description: ChromaDB collection name
+          isOptional: true
+          parameterType: STRING
+        persist_directory:
+          defaultValue: /data/chroma_db
+          description: ChromaDB persist directory
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        collection_size:
+          description: Total collection size after storage
+          parameterType: NUMBER_INTEGER
+        stored_count:
+          description: Embeddings stored in this run
+          parameterType: NUMBER_INTEGER
+  comp-validate-pipeline:
+    executorLabel: exec-validate-pipeline
+    inputDefinitions:
+      parameters:
+        collection_name:
+          defaultValue: documents
+          description: ChromaDB collection name
+          isOptional: true
+          parameterType: STRING
+        expected_count:
+          description: Expected minimum number of documents
+          parameterType: NUMBER_INTEGER
+        persist_directory:
+          defaultValue: /data/chroma_db
+          description: ChromaDB persist directory
+          isOptional: true
+          parameterType: STRING
+    outputDefinitions:
+      parameters:
+        actual_count:
+          description: Actual document count
+          parameterType: NUMBER_INTEGER
+        validation_passed:
+          description: Whether validation passed
+          parameterType: BOOLEAN
+deploymentSpec:
+  executors:
+    exec-generate-embeddings:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - generate_embeddings
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'sentence-transformers>=3.4.0'\
+          \ 'torch>=2.0.0'  &&  python3 -m pip install --quiet --no-warn-script-location\
+          \ 'kfp==2.16.0' '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"\
+          3.9\"' && \"$0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef generate_embeddings(\n    chunks_path: dsl.InputPath(\"Chunks\"\
+          ),\n    embeddings_path: dsl.OutputPath(\"Embeddings\"),\n    model_name:\
+          \ str = \"sentence-transformers/all-MiniLM-L6-v2\",\n) -> NamedTuple(\"\
+          Outputs\", [(\"embedding_count\", int), (\"dimension\", int)]):\n    \"\"\
+          \"Generate embeddings for all chunks.\n\n    Args:\n        chunks_path:\
+          \ Input chunks JSON\n        embeddings_path: Output embeddings JSON\n \
+          \       model_name: Hugging Face model name\n\n    Returns:\n        embedding_count:\
+          \ Total embeddings generated\n        dimension: Embedding vector dimension\n\
+          \    \"\"\"\n    import json\n    from collections import namedtuple\n \
+          \   from sentence_transformers import SentenceTransformer\n\n    # Load\
+          \ chunks\n    with open(chunks_path, \"r\") as f:\n        chunks = json.load(f)\n\
+          \n    # Load model\n    print(f\"\U0001F4E5 Loading model: {model_name}\"\
+          )\n    model = SentenceTransformer(model_name)\n\n    # Generate embeddings\
+          \ in batch\n    texts = [chunk[\"content\"] for chunk in chunks]\n    print(f\"\
+          \U0001F9E0 Generating embeddings for {len(texts)} chunks...\")\n    embeddings\
+          \ = model.encode(texts, show_progress_bar=True, convert_to_numpy=True)\n\
+          \n    # Combine chunks with embeddings\n    output = []\n    for chunk,\
+          \ embedding in zip(chunks, embeddings):\n        output.append({\n     \
+          \       **chunk,\n            \"embedding\": embedding.tolist(),\n     \
+          \   })\n\n    # Save\n    with open(embeddings_path, \"w\") as f:\n    \
+          \    json.dump(output, f)\n\n    dim = embeddings.shape[1] if len(embeddings)\
+          \ > 0 else 0\n    print(f\"\u2705 Generated {len(embeddings)} embeddings\
+          \ (dim: {dim})\")\n\n    Outputs = namedtuple(\"Outputs\", [\"embedding_count\"\
+          , \"dimension\"])\n    return Outputs(embedding_count=len(embeddings), dimension=dim)\n\
+          \n"
+        image: python:3.12-slim
+        resources:
+          cpuLimit: 2.0
+          memoryLimit: 4.294967296
+          resourceCpuLimit: '2'
+          resourceMemoryLimit: 4Gi
+    exec-load-documents:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - load_documents
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'pypdf>=5.0.0'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef load_documents(\n    source_path: str,\n    output_path: dsl.OutputPath(\"\
+          Documents\"),\n) -> NamedTuple(\"Outputs\", [(\"file_count\", int), (\"\
+          total_size_kb\", float)]):\n    \"\"\"Load documents from source path.\n\
+          \n    Args:\n        source_path: Path to source files (PDF, TXT, MD)\n\
+          \        output_path: Output path for loaded documents JSON\n\n    Returns:\n\
+          \        file_count: Number of files loaded\n        total_size_kb: Total\
+          \ size in KB\n    \"\"\"\n    import json\n    import os\n    from collections\
+          \ import namedtuple\n    from pathlib import Path\n\n    documents = []\n\
+          \    total_size = 0\n\n    source = Path(source_path)\n    if not source.exists():\n\
+          \        raise FileNotFoundError(f\"Source path not found: {source_path}\"\
+          )\n\n    # Process each file\n    for file_path in source.rglob(\"*\"):\n\
+          \        if file_path.suffix.lower() not in [\".pdf\", \".txt\", \".md\"\
+          ]:\n            continue\n\n        size_kb = file_path.stat().st_size /\
+          \ 1024\n        total_size += size_kb\n\n        # Read content based on\
+          \ file type\n        if file_path.suffix.lower() == \".pdf\":\n        \
+          \    from pypdf import PdfReader\n            reader = PdfReader(str(file_path))\n\
+          \            content = \"\\n\".join(page.extract_text() for page in reader.pages)\n\
+          \        else:\n            content = file_path.read_text(encoding=\"utf-8\"\
+          , errors=\"ignore\")\n\n        documents.append({\n            \"filename\"\
+          : file_path.name,\n            \"filepath\": str(file_path),\n         \
+          \   \"content\": content,\n            \"size_kb\": size_kb,\n         \
+          \   \"type\": file_path.suffix.lower()[1:],\n        })\n\n    # Save documents\
+          \ to output\n    with open(output_path, \"w\") as f:\n        json.dump(documents,\
+          \ f, indent=2)\n\n    print(f\"\u2705 Loaded {len(documents)} documents\
+          \ ({total_size:.2f} KB)\")\n\n    Outputs = namedtuple(\"Outputs\", [\"\
+          file_count\", \"total_size_kb\"])\n    return Outputs(file_count=len(documents),\
+          \ total_size_kb=round(total_size, 2))\n\n"
+        image: python:3.12-slim
+    exec-process-documents:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - process_documents
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'langchain-text-splitters>=0.3.0'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef process_documents(\n    input_path: dsl.InputPath(\"Documents\"\
+          ),\n    output_path: dsl.OutputPath(\"Chunks\"),\n    chunk_size: int =\
+          \ 1000,\n    chunk_overlap: int = 200,\n) -> NamedTuple(\"Outputs\", [(\"\
+          chunk_count\", int), (\"avg_chunk_size\", float)]):\n    \"\"\"Process documents\
+          \ into chunks.\n\n    Args:\n        input_path: Input documents JSON\n\
+          \        output_path: Output chunks JSON\n        chunk_size: Maximum chunk\
+          \ size in characters\n        chunk_overlap: Overlap between chunks\n\n\
+          \    Returns:\n        chunk_count: Total number of chunks created\n   \
+          \     avg_chunk_size: Average chunk size in characters\n    \"\"\"\n   \
+          \ import json\n    import hashlib\n    from collections import namedtuple\n\
+          \    from langchain_text_splitters import RecursiveCharacterTextSplitter\n\
+          \n    # Load documents\n    with open(input_path, \"r\") as f:\n       \
+          \ documents = json.load(f)\n\n    # Initialize splitter\n    splitter =\
+          \ RecursiveCharacterTextSplitter(\n        chunk_size=chunk_size,\n    \
+          \    chunk_overlap=chunk_overlap,\n        separators=[\"\\n\\n\", \"\\\
+          n\", \". \", \" \", \"\"],\n    )\n\n    all_chunks = []\n    total_chars\
+          \ = 0\n\n    for doc in documents:\n        chunks = splitter.split_text(doc[\"\
+          content\"])\n        doc_id = hashlib.md5(doc[\"filename\"].encode()).hexdigest()[:12]\n\
+          \n        for i, chunk in enumerate(chunks):\n            chunk_id = f\"\
+          {doc_id}_chunk_{i}\"\n            all_chunks.append({\n                \"\
+          chunk_id\": chunk_id,\n                \"doc_id\": doc_id,\n           \
+          \     \"content\": chunk,\n                \"metadata\": {\n           \
+          \         \"filename\": doc[\"filename\"],\n                    \"chunk_index\"\
+          : i,\n                    \"type\": doc[\"type\"],\n                },\n\
+          \            })\n            total_chars += len(chunk)\n\n    # Save chunks\n\
+          \    with open(output_path, \"w\") as f:\n        json.dump(all_chunks,\
+          \ f, indent=2)\n\n    avg_size = total_chars / max(len(all_chunks), 1)\n\
+          \    print(f\"\u2705 Created {len(all_chunks)} chunks (avg size: {avg_size:.0f}\
+          \ chars)\")\n\n    Outputs = namedtuple(\"Outputs\", [\"chunk_count\", \"\
+          avg_chunk_size\"])\n    return Outputs(chunk_count=len(all_chunks), avg_chunk_size=round(avg_size,\
+          \ 2))\n\n"
+        image: python:3.12-slim
+    exec-store-in-vector-db:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - store_in_vector_db
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'chromadb>=0.6.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef store_in_vector_db(\n    embeddings_path: dsl.InputPath(\"Embeddings\"\
+          ),\n    collection_name: str = \"documents\",\n    persist_directory: str\
+          \ = \"/data/chroma_db\",\n) -> NamedTuple(\"Outputs\", [(\"stored_count\"\
+          , int), (\"collection_size\", int)]):\n    \"\"\"Store embeddings in ChromaDB.\n\
+          \n    Args:\n        embeddings_path: Input embeddings JSON\n        collection_name:\
+          \ ChromaDB collection name\n        persist_directory: ChromaDB persist\
+          \ directory\n\n    Returns:\n        stored_count: Embeddings stored in\
+          \ this run\n        collection_size: Total collection size after storage\n\
+          \    \"\"\"\n    import json\n    from collections import namedtuple\n \
+          \   import chromadb\n\n    # Load embeddings\n    with open(embeddings_path,\
+          \ \"r\") as f:\n        items = json.load(f)\n\n    # Initialize ChromaDB\n\
+          \    print(f\"\U0001F4E6 Connecting to ChromaDB at {persist_directory}\"\
+          )\n    client = chromadb.PersistentClient(path=persist_directory)\n    collection\
+          \ = client.get_or_create_collection(\n        name=collection_name,\n  \
+          \      metadata={\"hnsw:space\": \"cosine\"},\n    )\n\n    # Prepare data\
+          \ for batch insert\n    ids = [item[\"chunk_id\"] for item in items]\n \
+          \   embeddings = [item[\"embedding\"] for item in items]\n    documents\
+          \ = [item[\"content\"] for item in items]\n    metadatas = [item[\"metadata\"\
+          ] for item in items]\n\n    # Add to collection\n    collection.add(\n \
+          \       ids=ids,\n        embeddings=embeddings,\n        documents=documents,\n\
+          \        metadatas=metadatas,\n    )\n\n    total_count = collection.count()\n\
+          \    print(f\"\u2705 Stored {len(ids)} embeddings (collection total: {total_count})\"\
+          )\n\n    Outputs = namedtuple(\"Outputs\", [\"stored_count\", \"collection_size\"\
+          ])\n    return Outputs(stored_count=len(ids), collection_size=total_count)\n\
+          \n"
+        image: python:3.12-slim
+    exec-validate-pipeline:
+      container:
+        args:
+        - --executor_input
+        - '{{$}}'
+        - --function_to_execute
+        - validate_pipeline
+        command:
+        - sh
+        - -c
+        - "\nif ! [ -x \"$(command -v pip)\" ]; then\n    python3 -m ensurepip ||\
+          \ python3 -m ensurepip --user || apt-get install python3-pip\nfi\n\nPIP_DISABLE_PIP_VERSION_CHECK=1\
+          \ python3 -m pip install --quiet --no-warn-script-location 'chromadb>=0.6.3'\
+          \  &&  python3 -m pip install --quiet --no-warn-script-location 'kfp==2.16.0'\
+          \ '--no-deps' 'typing-extensions>=3.7.4,<5; python_version<\"3.9\"' && \"\
+          $0\" \"$@\"\n"
+        - sh
+        - -ec
+        - 'program_path=$(mktemp -d)
+
+
+          printf "%s" "$0" > "$program_path/ephemeral_component.py"
+
+          _KFP_RUNTIME=true python3 -m kfp.dsl.executor_main                         --component_module_path                         "$program_path/ephemeral_component.py"                         "$@"
+
+          '
+        - "\nimport kfp\nfrom kfp import dsl\nfrom kfp.dsl import *\nfrom typing import\
+          \ *\n\ndef validate_pipeline(\n    expected_count: int,\n    collection_name:\
+          \ str = \"documents\",\n    persist_directory: str = \"/data/chroma_db\"\
+          ,\n) -> NamedTuple(\"Outputs\", [(\"validation_passed\", bool), (\"actual_count\"\
+          , int)]):\n    \"\"\"Validate that the pipeline succeeded.\n\n    Args:\n\
+          \        expected_count: Expected minimum number of documents\n        collection_name:\
+          \ ChromaDB collection name\n        persist_directory: ChromaDB persist\
+          \ directory\n\n    Returns:\n        validation_passed: Whether validation\
+          \ passed\n        actual_count: Actual document count\n    \"\"\"\n    from\
+          \ collections import namedtuple\n    import chromadb\n\n    print(f\"\U0001F50D\
+          \ Validating ChromaDB collection: {collection_name}\")\n    client = chromadb.PersistentClient(path=persist_directory)\n\
+          \n    try:\n        collection = client.get_collection(name=collection_name)\n\
+          \        actual_count = collection.count()\n    except Exception as e:\n\
+          \        print(f\"\u274C Collection not found: {e}\")\n        Outputs =\
+          \ namedtuple(\"Outputs\", [\"validation_passed\", \"actual_count\"])\n \
+          \       return Outputs(validation_passed=False, actual_count=0)\n\n    passed\
+          \ = actual_count >= expected_count\n\n    if passed:\n        print(f\"\u2705\
+          \ Validation passed: {actual_count} >= {expected_count}\")\n    else:\n\
+          \        print(f\"\u274C Validation failed: {actual_count} < {expected_count}\"\
+          )\n\n    Outputs = namedtuple(\"Outputs\", [\"validation_passed\", \"actual_count\"\
+          ])\n    return Outputs(validation_passed=passed, actual_count=actual_count)\n\
+          \n"
+        image: python:3.12-slim
+pipelineInfo:
+  description: End-to-end RAG document ingestion pipeline
+  name: rag-document-ingestion-pipeline
+root:
+  dag:
+    tasks:
+      generate-embeddings:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-generate-embeddings
+        dependentTasks:
+        - process-documents
+        inputs:
+          artifacts:
+            chunks_path:
+              taskOutputArtifact:
+                outputArtifactKey: output_path
+                producerTask: process-documents
+          parameters:
+            model_name:
+              componentInputParameter: embedding_model
+        taskInfo:
+          name: "\U0001F9E0 Generate Embeddings"
+      load-documents:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-load-documents
+        inputs:
+          parameters:
+            source_path:
+              componentInputParameter: source_path
+        taskInfo:
+          name: "\U0001F4C2 Load Documents"
+      process-documents:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-process-documents
+        dependentTasks:
+        - load-documents
+        inputs:
+          artifacts:
+            input_path:
+              taskOutputArtifact:
+                outputArtifactKey: output_path
+                producerTask: load-documents
+          parameters:
+            chunk_overlap:
+              componentInputParameter: chunk_overlap
+            chunk_size:
+              componentInputParameter: chunk_size
+        taskInfo:
+          name: "\u2702\uFE0F Chunk Documents"
+      store-in-vector-db:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-store-in-vector-db
+        dependentTasks:
+        - generate-embeddings
+        inputs:
+          artifacts:
+            embeddings_path:
+              taskOutputArtifact:
+                outputArtifactKey: embeddings_path
+                producerTask: generate-embeddings
+          parameters:
+            collection_name:
+              componentInputParameter: collection_name
+            persist_directory:
+              componentInputParameter: persist_directory
+        taskInfo:
+          name: "\U0001F4BE Store in ChromaDB"
+      validate-pipeline:
+        cachingOptions:
+          enableCache: true
+        componentRef:
+          name: comp-validate-pipeline
+        dependentTasks:
+        - store-in-vector-db
+        inputs:
+          parameters:
+            collection_name:
+              componentInputParameter: collection_name
+            expected_count:
+              componentInputParameter: min_expected_docs
+            persist_directory:
+              componentInputParameter: persist_directory
+        taskInfo:
+          name: "\u2705 Validate Pipeline"
+  inputDefinitions:
+    parameters:
+      chunk_overlap:
+        defaultValue: 200.0
+        description: Chunk overlap
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      chunk_size:
+        defaultValue: 1000.0
+        description: Document chunk size
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      collection_name:
+        defaultValue: documents
+        description: ChromaDB collection name
+        isOptional: true
+        parameterType: STRING
+      embedding_model:
+        defaultValue: sentence-transformers/all-MiniLM-L6-v2
+        description: HuggingFace embedding model
+        isOptional: true
+        parameterType: STRING
+      min_expected_docs:
+        defaultValue: 1.0
+        description: Minimum documents expected for validation
+        isOptional: true
+        parameterType: NUMBER_INTEGER
+      persist_directory:
+        defaultValue: /data/chroma_db
+        description: ChromaDB storage path
+        isOptional: true
+        parameterType: STRING
+      source_path:
+        defaultValue: /data/documents
+        description: Path to source documents
+        isOptional: true
+        parameterType: STRING
+schemaVersion: 2.1.0
+sdkVersion: kfp-2.16.0

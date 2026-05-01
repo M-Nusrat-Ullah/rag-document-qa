@@ -1,0 +1,80 @@
+Collecting kfp
+  Downloading kfp-2.16.0-py3-none-any.whl.metadata (4.7 kB)
+Requirement already satisfied: click>=8.1.8 in ./venv/lib/python3.12/site-packages (from kfp) (8.3.1)
+Collecting click-option-group==0.5.7 (from kfp)
+  Downloading click_option_group-0.5.7-py3-none-any.whl.metadata (5.8 kB)
+Collecting docstring-parser<1,>=0.7.3 (from kfp)
+  Downloading docstring_parser-0.18.0-py3-none-any.whl.metadata (3.5 kB)
+Collecting google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5 (from kfp)
+  Downloading google_api_core-2.30.3-py3-none-any.whl.metadata (3.1 kB)
+Requirement already satisfied: google-auth<3,>=1.6.1 in ./venv/lib/python3.12/site-packages (from kfp) (2.48.0)
+Collecting google-cloud-storage<4,>=2.2.1 (from kfp)
+  Downloading google_cloud_storage-3.10.1-py3-none-any.whl.metadata (15 kB)
+Collecting kfp-pipeline-spec<3,>=2.16.0 (from kfp)
+  Downloading kfp_pipeline_spec-2.16.0-py3-none-any.whl.metadata (433 bytes)
+Collecting kfp-server-api<3,>=2.16.0 (from kfp)
+  Downloading kfp_server_api-2.16.0.tar.gz (63 kB)
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Collecting kubernetes<31,>=8.0.0 (from kfp)
+  Downloading kubernetes-30.1.0-py2.py3-none-any.whl.metadata (1.5 kB)
+Requirement already satisfied: protobuf<7.0,>=6.31.1 in ./venv/lib/python3.12/site-packages (from kfp) (6.33.5)
+Requirement already satisfied: PyYAML<7,>=5.3 in ./venv/lib/python3.12/site-packages (from kfp) (6.0.3)
+Requirement already satisfied: requests-toolbelt<2,>=0.8.0 in ./venv/lib/python3.12/site-packages (from kfp) (1.0.0)
+Collecting tabulate<1,>=0.8.6 (from kfp)
+  Downloading tabulate-0.10.0-py3-none-any.whl.metadata (40 kB)
+Requirement already satisfied: urllib3<3.0.0 in ./venv/lib/python3.12/site-packages (from kfp) (2.6.3)
+Requirement already satisfied: googleapis-common-protos<2.0.0,>=1.63.2 in ./venv/lib/python3.12/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5->kfp) (1.72.0)
+Collecting proto-plus<2.0.0,>=1.22.3 (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5->kfp)
+  Downloading proto_plus-1.27.2-py3-none-any.whl.metadata (2.2 kB)
+Requirement already satisfied: requests<3.0.0,>=2.20.0 in ./venv/lib/python3.12/site-packages (from google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5->kfp) (2.32.5)
+Requirement already satisfied: pyasn1-modules>=0.2.1 in ./venv/lib/python3.12/site-packages (from google-auth<3,>=1.6.1->kfp) (0.4.2)
+Requirement already satisfied: cryptography>=38.0.3 in ./venv/lib/python3.12/site-packages (from google-auth<3,>=1.6.1->kfp) (46.0.5)
+Requirement already satisfied: rsa<5,>=3.1.4 in ./venv/lib/python3.12/site-packages (from google-auth<3,>=1.6.1->kfp) (4.9.1)
+Collecting google-cloud-core<3.0.0,>=2.4.2 (from google-cloud-storage<4,>=2.2.1->kfp)
+  Downloading google_cloud_core-2.5.1-py3-none-any.whl.metadata (2.8 kB)
+Collecting google-resumable-media<3.0.0,>=2.7.2 (from google-cloud-storage<4,>=2.2.1->kfp)
+  Downloading google_resumable_media-2.8.2-py3-none-any.whl.metadata (2.2 kB)
+Collecting google-crc32c<2.0.0,>=1.1.3 (from google-cloud-storage<4,>=2.2.1->kfp)
+  Downloading google_crc32c-1.8.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl.metadata (1.7 kB)
+Requirement already satisfied: six>=1.10 in ./venv/lib/python3.12/site-packages (from kfp-server-api<3,>=2.16.0->kfp) (1.17.0)
+Requirement already satisfied: certifi in ./venv/lib/python3.12/site-packages (from kfp-server-api<3,>=2.16.0->kfp) (2026.1.4)
+Requirement already satisfied: python-dateutil in ./venv/lib/python3.12/site-packages (from kfp-server-api<3,>=2.16.0->kfp) (2.9.0.post0)
+Requirement already satisfied: websocket-client!=0.40.0,!=0.41.*,!=0.42.*,>=0.32.0 in ./venv/lib/python3.12/site-packages (from kubernetes<31,>=8.0.0->kfp) (1.9.0)
+Requirement already satisfied: requests-oauthlib in ./venv/lib/python3.12/site-packages (from kubernetes<31,>=8.0.0->kfp) (2.0.0)
+Requirement already satisfied: oauthlib>=3.2.2 in ./venv/lib/python3.12/site-packages (from kubernetes<31,>=8.0.0->kfp) (3.3.1)
+Requirement already satisfied: charset_normalizer<4,>=2 in ./venv/lib/python3.12/site-packages (from requests<3.0.0,>=2.20.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5->kfp) (3.4.4)
+Requirement already satisfied: idna<4,>=2.5 in ./venv/lib/python3.12/site-packages (from requests<3.0.0,>=2.20.0->google-api-core!=2.0.*,!=2.1.*,!=2.2.*,!=2.3.0,<3.0.0dev,>=1.31.5->kfp) (3.11)
+Requirement already satisfied: pyasn1>=0.1.3 in ./venv/lib/python3.12/site-packages (from rsa<5,>=3.1.4->google-auth<3,>=1.6.1->kfp) (0.6.2)
+Requirement already satisfied: cffi>=2.0.0 in ./venv/lib/python3.12/site-packages (from cryptography>=38.0.3->google-auth<3,>=1.6.1->kfp) (2.0.0)
+Requirement already satisfied: pycparser in ./venv/lib/python3.12/site-packages (from cffi>=2.0.0->cryptography>=38.0.3->google-auth<3,>=1.6.1->kfp) (3.0)
+Downloading kfp-2.16.0-py3-none-any.whl (418 kB)
+Downloading click_option_group-0.5.7-py3-none-any.whl (11 kB)
+Downloading docstring_parser-0.18.0-py3-none-any.whl (22 kB)
+Downloading google_api_core-2.30.3-py3-none-any.whl (173 kB)
+Downloading google_cloud_storage-3.10.1-py3-none-any.whl (324 kB)
+Downloading google_cloud_core-2.5.1-py3-none-any.whl (29 kB)
+Downloading google_crc32c-1.8.0-cp312-cp312-manylinux1_x86_64.manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_5_x86_64.whl (33 kB)
+Downloading google_resumable_media-2.8.2-py3-none-any.whl (81 kB)
+Downloading kfp_pipeline_spec-2.16.0-py3-none-any.whl (9.9 kB)
+Downloading kubernetes-30.1.0-py2.py3-none-any.whl (1.7 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 1.7/1.7 MB 47.1 kB/s  0:00:36
+Downloading proto_plus-1.27.2-py3-none-any.whl (50 kB)
+Downloading tabulate-0.10.0-py3-none-any.whl (39 kB)
+Building wheels for collected packages: kfp-server-api
+  Building wheel for kfp-server-api (pyproject.toml): started
+  Building wheel for kfp-server-api (pyproject.toml): finished with status 'done'
+  Created wheel for kfp-server-api: filename=kfp_server_api-2.16.0-py3-none-any.whl size=115417 sha256=986a4715a99b7411fa99d03bf1f5ab147ad6ab51b13c56722b86ca3f92123aec
+  Stored in directory: /home/tahmid/.cache/pip/wheels/27/70/8a/54776b945107a033f21adb1f2e1925759bb413862003a61b6f
+Successfully built kfp-server-api
+Installing collected packages: tabulate, proto-plus, kfp-pipeline-spec, google-crc32c, docstring-parser, click-option-group, kfp-server-api, google-resumable-media, kubernetes, google-api-core, google-cloud-core, google-cloud-storage, kfp
+  Attempting uninstall: kubernetes
+    Found existing installation: kubernetes 35.0.0
+    Uninstalling kubernetes-35.0.0:
+      Successfully uninstalled kubernetes-35.0.0
+
+Successfully installed click-option-group-0.5.7 docstring-parser-0.18.0 google-api-core-2.30.3 google-cloud-core-2.5.1 google-cloud-storage-3.10.1 google-crc32c-1.8.0 google-resumable-media-2.8.2 kfp-2.16.0 kfp-pipeline-spec-2.16.0 kfp-server-api-2.16.0 kubernetes-30.1.0 proto-plus-1.27.2 tabulate-0.10.0
