@@ -2,6 +2,8 @@
 
 > Production-ready Retrieval-Augmented Generation (RAG) application for intelligent document question answering.
 
+> 🌐 **Featured on my portfolio:** [nusrat-ullah.vercel.app](https://nusrat-ullah.vercel.app/#projects)
+
 ![Python](https://img.shields.io/badge/Python-3.12-3776AB?style=flat&logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=flat&logo=fastapi&logoColor=white)
 ![ChromaDB](https://img.shields.io/badge/ChromaDB-Vector_Store-orange?style=flat)
